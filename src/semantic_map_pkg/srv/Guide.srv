@@ -1,0 +1,10 @@
+# request params
+string category  # 导航目标类
+string op_cmd  # 操作命令
+string origin_cmd  # 最初始的人为指令
+---
+# response params
+bool success
+string message
+string label  # 导航具体语义对象
+geometry_msgs/Pose[] nav_goals  # 导航点列表，包含多个可用导航点

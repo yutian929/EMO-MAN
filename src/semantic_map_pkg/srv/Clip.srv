@@ -1,0 +1,10 @@
+# request params
+string task  # 要让CLIP做的任务
+string text  # 文本，用于文本特征提取任务，和单文本-多图像匹配任务
+sensor_msgs/Image image  # 图像，用于图像特征提取任务
+string image_paths  # 图像路径，用于单文本-多图像匹配任务
+---
+# response params
+bool success
+string message
+float32[] data  # 任务结果
