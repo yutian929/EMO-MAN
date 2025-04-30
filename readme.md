@@ -6,10 +6,10 @@ Official implementation of **EMO-MAN**
 
 ## Demo Videos
 ### Task 1: Heating Food from Refrigerator
-[![Food Heating Demo](assets/food.png)](Heating%20Food%20from%20Refrigerator.mp4)
+[![Food Heating Demo](assets/food.png)](assets/Heating%20Food%20from%20Refrigerator.mp4)
 
 ### Task 2: Laundry to Washing Machine
-[![Laundry Demo](assets/washing.png)](Laundry%20to%20Washing%20Machine.mp4)
+[![Laundry Demo](assets/washing.png)](assets/Laundry%20to%20Washing%20Machine.mp4)
 
 *Note: Manipulation actions are simulated - robot navigates to pre-defined interaction positions without physical grasping mechanism.*
 
