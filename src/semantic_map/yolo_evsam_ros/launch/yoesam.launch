@@ -1,0 +1,34 @@
+<launch>
+  <!-- Get environment variables -->
+  <arg name="venv" default="/home/$(env USER)/miniconda3/envs/py310/bin/python" doc="Path to python environment."/>
+  <env name="LD_PRELOAD" value="/usr/lib/x86_64-linux-gnu/libffi.so.7" />
+
+  <!-- Get arguments -->
+  <arg name="model_path" default="$(find yolo_evsam_ros)/weights/yolov8l-worldv2.pt" doc="Detection Model Path [default: weights/yolov8l-worldv2.pt]" />
+  <!-- <arg name="config" default="$(find yolo_evsam_ros)/config/GroundingDINO_SwinT_OGC.py" doc="Config path [default: src/groundingdino/config/GroundingDINO_SwinT_OGC.py]" /> -->
+  <arg name="sam_model" default="efficientvit-sam-l2" doc="Can be either efficientvit-sam-l0, efficientvit-sam-l1 or efficientvit-sam-l2."/>
+  <arg name="box_threshold" default="0.2" doc="Min confidence threshold for box." />
+  <arg name="text_threshold" default="0.3" doc="Min confidence threshold for text." />
+  <!-- <arg name="default_prompt" default="keyboard. mouse. cellphone. earphone. laptop. computer. water bottle. plant. keys. door. chair." doc="Default prompt for grounding. end with ." /> -->
+
+  
+  <!-- Get SAM checkpoint -->
+  <arg name="sam_checkpoint" value="$(find yolo_evsam_ros)/weights/efficientvit_sam_l0.pt" if="$(eval sam_model == 'efficientvit-sam-l0')" />
+  <arg name="sam_checkpoint" value="$(find yolo_evsam_ros)/weights/efficientvit_sam_l1.pt" if="$(eval sam_model == 'efficientvit-sam-l1')" />
+  <arg name="sam_checkpoint" value="$(find yolo_evsam_ros)/weights/efficientvit_sam_l2.pt" if="$(eval sam_model == 'efficientvit-sam-l2')" />
+  <!-- <arg name="sam_checkpoint" value="$(find yolo_evsam_ros)/weights/efficientvit_sam_l1.pt" /> -->
+
+  <!-- Run Contact-GraspNet -->
+  <node name="yolo_evsam_ros" pkg="yolo_evsam_ros" type="yoesam.py" launch-prefix = "$(arg venv)" output="screen" >
+      <param name="model_path" type="str" value="$(arg model_path)" />
+      <!-- <param name="config" type="str" value="$(arg config)" /> -->
+      <param name="sam_checkpoint" type="str" value="$(arg sam_checkpoint)" />
+      <param name="sam_model" type="str" value="$(arg sam_model)" />
+      <param name="box_threshold" type="double" value="$(arg box_threshold)" />
+      <param name="text_threshold" type="double" value="$(arg text_threshold)" />
+  </node>
+
+  <!-- <node name="grounding_sam_node" pkg="grounding_sam_ros" type="grounding_sam_node.py" output="screen" >
+      <param name="default_prompt" type="str" value="$(arg default_prompt)" />
+  </node> -->
+</launch>

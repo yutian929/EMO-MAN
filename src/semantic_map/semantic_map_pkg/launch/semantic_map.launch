@@ -1,0 +1,125 @@
+<launch>
+    <!-- Environment Parameters -->
+    <arg name="semantic_map/venv" default="/usr/bin/python" doc="Python environment path for 3D dynamic semantic map generator, manager, guide"/>
+    <arg name="semantic_map/semantic_categories_json_path" default="$(find semantic_map_pkg)/scripts/semantic_categories.json"
+                                                            doc="the path of semantic categories json file"/>
+    <!-- Semantic Map Generator Parameters -->
+    <arg name="semantic_map/generator/downsample_step" default="2" doc="downsampling rate of semantic point cloud"/>
+    <arg name="semantic_map/generator/enable_filtering" default="true" doc="whether to enable semantic point cloud filtering"/>
+    <arg name="semantic_map/generator/topic_image_sub" default="/camera/color/image_raw" doc="subscription topic name of rgb image"/>
+    <arg name="semantic_map/generator/topic_depth_sub" default="/camera/aligned_depth_to_color/image_raw" doc="subscription topic name of depth"/>
+    <arg name="semantic_map/generator/topic_camera_info_sub" default="/camera/color/camera_info" doc="topic name of camera intrinsic parameters"/>
+    <arg name="semantic_map/generator/service_semantic_object_detseg" default="/vit_detection" doc="service name of object detection and segmentation"/>
+    <arg name="semantic_map/generator/camera_link_father" default="map" doc="the name of parent tf frame(global tf frame)"/>
+    <arg name="semantic_map/generator/camera_link_child" default="camera_color_optical_frame" doc="the name of camera tf frame"/>
+    <arg name="semantic_map/generator/det_seg_mode" default="yoesam" doc="method selection for object detection and semantic segmentation, yoesam or gsam"/>
+    <arg name="semantic_map/generator/timer_duration" default="1.0" doc="the time interval for publishing semantic objects"/>
+    <arg name="semantic_map/generator/enable_new_objs_pub" default="true" doc="whether to enable new objects pub"/>
+    <!-- Semantic Map Manager Parameters -->
+    <arg name="semantic_map/manager/db_path" default="$(env YANBOT_WS)/semantic_map.db" doc="the path of semantic map database"/>
+    <arg name="semantic_map/manager/renew_db" default="true" doc="whether to clear the semantic map database at startup"/>
+    <arg name="semantic_map/manager/last_seen_imgs_dir" default="$(env YANBOT_WS)/last_seen_imgs"
+                                                         doc="storage path of annotated images corresponding to semantic objects"/>
+    <arg name="semantic_map/manager/feature_match_threshold" default="0.8" doc="threshold for feature matching"/>
+    <arg name="semantic_map/manager/semantic_map_frame_id" default="map" doc="the name of frame_id used by semantic map"/>
+    <arg name="semantic_map/manager/show_markers" default="true" doc="whether to show bounding boxes and arrows"/>
+    <arg name="semantic_map/manager/bbox_colora" default="[0.0, 1.0, 0.0, 0.5]" doc="visualization parameters of semantic object bounding box"/>
+    <arg name="semantic_map/manager/bbox_line_width" default="0.01" doc="line width of bounding box"/>
+    <arg name="semantic_map/manager/arrow_colora" default="[1.0, 0.0, 0.0, 1.0]" doc="visualization parameters of arrows"/>
+    <arg name="semantic_map/manager/arrow_length" default="0.3" doc="length of arrows"/>
+    <arg name="semantic_map/manager/arrow_scale_x" default="0.05" doc="diameter of arrow shaft"/>
+    <arg name="semantic_map/manager/arrow_scale_y" default="0.1" doc="diameter of arrow head"/>
+    <arg name="semantic_map/manager/arrow_scale_z" default="0.1" doc="length of arrow head"/>
+    <arg name="semantic_map/manager/label_colora" default="[1.0, 1.0, 1.0, 1.0]" doc="visualization parameters of labels"/>
+    <arg name="semantic_map/manager/label_scale" default="0.1" doc="default font size"/>
+    <arg name="semantic_map/manager/label_offset" default="0.1" doc="default offset"/>
+    <arg name="semantic_map/manager/show_label" default="true" doc="whether to show labels"/>
+    <arg name="semantic_map/manager/show_bbox" default="true" doc="whether to show bounding boxes"/>
+    <arg name="semantic_map/manager/show_arrow" default="false" doc="whether to show arrows"/>
+    
+    <!-- Semantic Map Guide Parameters -->
+    <arg name="semantic_map/guide/db_path" default="$(env YANBOT_WS)/semantic_map.db" doc="the path of semantic map database"/>
+    <arg name="semantic_map/guide/last_seen_imgs_dir" default="$(env YANBOT_WS)/last_seen_imgs"
+                                                       doc="storage path of annotated images corresponding to semantic objects"/>
+    <arg name="semantic_map/guide/base_link_father" default="map" doc="the name of parent tf frame(global tf frame)"/>
+    <arg name="semantic_map/guide/base_link_child" default="camera_link" doc="the name of camera tf frame"/>
+    <arg name="semantic_map/guide/map_cache_path" default="$(find semantic_map_pkg)/scripts/map_cache.pkl" doc="the path of semantic map cache"/>
+    
+    <!-- Semantic Map Generator -->
+    <!-- Dependence: det&seg -->
+    <include file="$(find yolo_evsam_ros)/launch/yoesam.launch" if="$(eval arg('semantic_map/generator/det_seg_mode') == 'yoesam')"/>
+    <include file="$(find grounding_sam_ros)/launch/gsam.launch" unless="$(eval arg('semantic_map/generator/det_seg_mode') == 'yoesam')"/>
+    <!-- Semantic Map Generator -->
+    <node name="semantic_map_generator_node" 
+        pkg="semantic_map_pkg" 
+        type="semantic_map_generator_node.py"
+        launch-prefix="$(arg semantic_map/venv)"
+        output="screen"
+        respawn="true">
+        <param name="semantic_categories_json_path" 
+                type="str" 
+                value="$(arg semantic_map/semantic_categories_json_path)"/>
+        <param name="downsample_step"      type="int"   value="$(arg semantic_map/generator/downsample_step)" />
+        <param name="topic_image_sub"      type="str"   value="$(arg semantic_map/generator/topic_image_sub)" />
+        <param name="topic_depth_sub"      type="str"   value="$(arg semantic_map/generator/topic_depth_sub)" />
+        <param name="topic_camera_info_sub" type="str" value="$(arg semantic_map/generator/topic_camera_info_sub)" />
+        <param name="service_semantic_object_detseg" type="str" value="$(arg semantic_map/generator/service_semantic_object_detseg)" />
+        <param name="enable_filtering"    type="bool"  value="$(arg semantic_map/generator/enable_filtering)" />
+        <param name="camera_link_father" type="str" value="$(arg semantic_map/generator/camera_link_father)"/>  <!-- 相机坐标系父节点 -->
+        <param name="camera_link_child" type="str" value="$(arg semantic_map/generator/camera_link_child)"/> <!-- 相机坐标系子节点 -->
+        <param name="timer_duration"      type="double" value="$(arg semantic_map/generator/timer_duration)" />
+        <param name="enable_new_objs_pub" type="bool" value="$(arg semantic_map/generator/enable_new_objs_pub)" />
+    </node>
+
+    <!-- Semantic Map Manager -->
+    <node name="semantic_map_manager_node" 
+        pkg="semantic_map_pkg" 
+        type="semantic_map_manager_node.py"
+        launch-prefix="$(arg semantic_map/venv)"
+        output="screen"
+        respawn="true">
+        <param name="db_path" type="str" value="$(arg semantic_map/manager/db_path)"/>
+        <param name="renew_db" type="bool" value="$(arg semantic_map/manager/renew_db)"/>
+        <param name="last_seen_imgs_dir" type="str" value="$(arg semantic_map/manager/last_seen_imgs_dir)"/>
+        <param name="feature_match_threshold" type="double" value="$(arg semantic_map/manager/feature_match_threshold)"/>
+        <param name="semantic_map_frame_id" type="str" value="$(arg semantic_map/manager/semantic_map_frame_id)"/>
+        <param name="show_markers" type="bool" value="$(arg semantic_map/manager/show_markers)"/>
+        <param name="bbox_colora" type="str" value="$(arg semantic_map/manager/bbox_colora)"/>
+        <param name="bbox_line_width" type="double" value="$(arg semantic_map/manager/bbox_line_width)"/>
+        <param name="arrow_colora" type="str" value="$(arg semantic_map/manager/arrow_colora)"/>
+        <param name="arrow_length" type="double" value="$(arg semantic_map/manager/arrow_length)"/>
+        <param name="arrow_scale_x" type="double" value="$(arg semantic_map/manager/arrow_scale_x)"/>
+        <param name="arrow_scale_y" type="double" value="$(arg semantic_map/manager/arrow_scale_y)"/>
+        <param name="arrow_scale_z" type="double" value="$(arg semantic_map/manager/arrow_scale_z)"/>
+        <param name="label_colora" type="str" value="$(arg semantic_map/manager/label_colora)"/>
+        <param name="label_scale" type="double" value="$(arg semantic_map/manager/label_scale)"/>
+        <param name="label_offset" type="double" value="$(arg semantic_map/manager/label_offset)"/>
+        <param name="show_bbox" type="bool" value="$(arg semantic_map/manager/show_bbox)"/>
+        <param name="show_arrow" type="bool" value="$(arg semantic_map/manager/show_arrow)"/>
+        <param name="show_label" type="bool" value="$(arg semantic_map/manager/show_label)"/>
+
+    </node>
+
+    <!-- Dependence: llm, vlm, clip -->
+    <include file="$(find llm_pkg)/launch/llm.launch"/>
+    <include file="$(find vlm_pkg)/launch/vlm.launch"/>
+    <include file="$(find semantic_map_pkg)/launch/clip.launch"/>
+    <!-- Semantic Map Guide -->
+    <node name="semantic_map_guide_node" 
+          pkg="semantic_map_pkg" 
+          type="semantic_map_guide_node.py" 
+          launch-prefix="$(arg semantic_map/venv)"
+          output="screen"
+          respawn="true">
+      <param name="semantic_categories_json_path" 
+             type="str" 
+             value="$(arg semantic_map/semantic_categories_json_path)"/>
+      <param name="db_path" type="str" value="$(arg semantic_map/guide/db_path)"/>
+      <param name="last_seen_imgs_dir" type="str" value="$(arg semantic_map/guide/last_seen_imgs_dir)"/>
+      <param name="base_link_father" type="str" value="$(arg semantic_map/guide/base_link_father)"/>
+      <param name="base_link_child" type="str" value="$(arg semantic_map/guide/base_link_child)"/>
+      <param name="map_cache_path" type="str" value="$(arg semantic_map/guide/map_cache_path)"/>  
+    </node>
+
+
+</launch>

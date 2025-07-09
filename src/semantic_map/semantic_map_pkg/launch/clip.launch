@@ -1,0 +1,10 @@
+<launch>
+    <!-- Get environment variables -->
+    <arg name="venv" default="/usr/bin/python" doc="Path to vlm python environment."/>
+    <arg name="clip/model_name" default="ViT-B/16" doc="CLIP model name. ['RN50', 'RN101', 'RN50x4', 'RN50x16', 'RN50x64', 'ViT-B/32', 'ViT-B/16', 'ViT-L/14', 'ViT-L/14@336px']"/>
+
+    <node name="clip_node" pkg="semantic_map_pkg" type="semantic_map_CLIP_node.py" launch-prefix = "$(arg venv)" output="screen" >
+        <param name="model_name" type="str" value="$(arg clip/model_name)"/>
+    </node>
+
+</launch>

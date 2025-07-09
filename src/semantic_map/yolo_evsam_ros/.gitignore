@@ -1,0 +1,7 @@
+__pycache__
+weights/*.pth
+weights/*.pt
+*.pyc
+fine_tune/datasets/
+fine_tune/runs/
+fine_tune/*.pt

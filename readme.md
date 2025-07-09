@@ -2,7 +2,7 @@
 
 [![Overview Figure](assets/overview.jpg)](assets/overview.jpg)  
 
-Official implementation of **EMO-MAN** 
+Official implementation of ***EMO-MAN*** (**CIAC-2025 best paper**)
 
 ## Demo Videos
 ### Task 1: Heating Food from Refrigerator
